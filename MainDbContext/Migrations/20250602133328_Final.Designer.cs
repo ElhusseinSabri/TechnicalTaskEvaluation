@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MainDbContext.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250602114353_New-Migration")]
-    partial class NewMigration
+    [Migration("20250602133328_Final")]
+    partial class Final
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -39,6 +39,18 @@ namespace MainDbContext.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Departments");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Marketing"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Development"
+                        });
                 });
 
             modelBuilder.Entity("Models.Models.Employee", b =>
@@ -49,7 +61,7 @@ namespace MainDbContext.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("DepartmentId")
+                    b.Property<int>("DepartmentId")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -60,6 +72,44 @@ namespace MainDbContext.Migrations
                     b.HasIndex("DepartmentId");
 
                     b.ToTable("Employees");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            DepartmentId = 1,
+                            Name = "Mohamed"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            DepartmentId = 1,
+                            Name = "Ahmed"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            DepartmentId = 1,
+                            Name = "Sarah"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            DepartmentId = 2,
+                            Name = "Nahla"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            DepartmentId = 2,
+                            Name = "Hanaa"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            DepartmentId = 2,
+                            Name = "Soaad"
+                        });
                 });
 
             modelBuilder.Entity("Models.Models.EmployeeReview", b =>
@@ -92,7 +142,9 @@ namespace MainDbContext.Migrations
                 {
                     b.HasOne("Models.Models.Department", "Department")
                         .WithMany()
-                        .HasForeignKey("DepartmentId");
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Department");
                 });

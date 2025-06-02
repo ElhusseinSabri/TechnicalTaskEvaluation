@@ -3,10 +3,12 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace MainDbContext.Migrations
 {
     /// <inheritdoc />
-    public partial class FressMigration : Migration
+    public partial class Final : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -37,7 +39,7 @@ namespace MainDbContext.Migrations
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     Name = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    DepartmentId = table.Column<int>(type: "int", nullable: true)
+                    DepartmentId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -46,7 +48,8 @@ namespace MainDbContext.Migrations
                         name: "FK_Employees_Departments_DepartmentId",
                         column: x => x.DepartmentId,
                         principalTable: "Departments",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -76,6 +79,28 @@ namespace MainDbContext.Migrations
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
+            migrationBuilder.InsertData(
+                table: "Departments",
+                columns: new[] { "Id", "Name" },
+                values: new object[,]
+                {
+                    { 1, "Marketing" },
+                    { 2, "Development" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Employees",
+                columns: new[] { "Id", "DepartmentId", "Name" },
+                values: new object[,]
+                {
+                    { 1, 1, "Mohamed" },
+                    { 2, 1, "Ahmed" },
+                    { 3, 1, "Sarah" },
+                    { 4, 2, "Nahla" },
+                    { 5, 2, "Hanaa" },
+                    { 6, 2, "Soaad" }
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_EmployeeReviews_EmployeeId",
                 table: "EmployeeReviews",
@@ -90,24 +115,11 @@ namespace MainDbContext.Migrations
                 name: "IX_Employees_DepartmentId",
                 table: "Employees",
                 column: "DepartmentId");
-
-      
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DeleteData(
-        table: "Employees",
-        keyColumn: "Id",
-        keyValues: new object[] { 1, 2, 3, 4, 5, 6 });
-
-            // Then delete Departments
-            migrationBuilder.DeleteData(
-                table: "Departments",
-                keyColumn: "Id",
-                keyValues: new object[] { 1, 2 });
-
             migrationBuilder.DropTable(
                 name: "EmployeeReviews");
 
