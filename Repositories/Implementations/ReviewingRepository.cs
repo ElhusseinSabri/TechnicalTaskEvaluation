@@ -26,14 +26,7 @@ namespace Repositories.Implementations
         }
         public async Task <List<EmployeeReview>> GetEmployeeReviewsAsync(string employeeName)
         {
-        //    return await _appDbContext.EmployeeReviews
-        //   .Include(r => r.Employee) 
-        //   .ThenInclude(e => e.Department)
-        //   .Include(r => r.ReviewedEmployee) 
-        //   .ThenInclude(e => e.Department)
-        //   .Where(r => r.ReviewedEmployee.Name == employeeName)
-        //   .ToListAsync();
-
+     
            return await _appDbContext.EmployeeReviews
     .Include(r => r.Employee.Department)
     .Include(r => r.ReviewedEmployee.Department)
