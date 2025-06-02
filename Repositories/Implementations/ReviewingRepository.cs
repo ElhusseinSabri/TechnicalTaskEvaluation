@@ -19,17 +19,26 @@ namespace Repositories.Implementations
             _appDbContext.EmployeeReviews.Add(employeeReview);
             await _appDbContext.SaveChangesAsync();
         }
-
+        public async Task InsertRangeAsync(List<EmployeeReview> reviews)
+        {
+            await _appDbContext.EmployeeReviews.AddRangeAsync(reviews);
+            await _appDbContext.SaveChangesAsync();
+        }
         public async Task <List<EmployeeReview>> GetEmployeeReviewsAsync(string employeeName)
         {
-            return await _appDbContext.EmployeeReviews
-           .Include(r => r.Employee) 
-           .ThenInclude(e => e.Department)
-           .Include(r => r.ReviewedEmployee) 
-           .ThenInclude(e => e.Department)
-           .Where(r => r.ReviewedEmployee.Name == employeeName)
-           .ToListAsync();
+        //    return await _appDbContext.EmployeeReviews
+        //   .Include(r => r.Employee) 
+        //   .ThenInclude(e => e.Department)
+        //   .Include(r => r.ReviewedEmployee) 
+        //   .ThenInclude(e => e.Department)
+        //   .Where(r => r.ReviewedEmployee.Name == employeeName)
+        //   .ToListAsync();
 
+           return await _appDbContext.EmployeeReviews
+    .Include(r => r.Employee.Department)
+    .Include(r => r.ReviewedEmployee.Department)
+    .Where(r => r.ReviewedEmployee.Name == employeeName)
+    .ToListAsync();
 
 
 
@@ -39,6 +48,13 @@ namespace Repositories.Implementations
         {
             return await _appDbContext.EmployeeReviews.FirstOrDefaultAsync(e => e.Employee.Id == employeeId && e.ReviewedEmployee.Id == reviewedId);
 
+        }
+
+        public async Task<List<EmployeeReview>> GetByReviewerAndReviewedsAsync(int reviewerId, List<int> reviewedIds)
+        {
+            return await _appDbContext.EmployeeReviews
+                .Where(r => r.Employee.Id == reviewerId && reviewedIds.Contains(r.ReviewedEmployee.Id))
+                .ToListAsync();
         }
 
 

@@ -21,5 +21,14 @@ namespace Repositories.Implementations
                 .Include(e => e.Department)
                 .FirstOrDefaultAsync(e => e.Name == name);
         }
+
+        public async Task<List<Employee>> GetByNamesAsync(List<string> names)
+        {
+            return await _context.Employees
+                .Include(e => e.Department)
+                .Where(e => names.Contains(e.Name))
+                .ToListAsync();
+        }
+
     }
 }

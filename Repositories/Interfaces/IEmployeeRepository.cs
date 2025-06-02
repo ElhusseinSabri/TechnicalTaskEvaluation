@@ -10,5 +10,7 @@ namespace Repositories.Interfaces
     public interface IEmployeeRepository
     {
         Task<Employee> GetByNameAsync(string name);
+        Task<List<Employee>> GetByNamesAsync(List<string> names);
+
     }
 }

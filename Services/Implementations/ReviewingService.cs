@@ -29,51 +29,49 @@ namespace Services.Implementations
         }
         public async Task SubmitRatingsAsync(EmployeeRatingDto dto)
         {
-            using var transaction = await _appDbContext.Database.BeginTransactionAsync();
-            try
+         
+            var reviewer = await _employeeRepo.GetByNameAsync(dto.ReviewerName);
+            if (reviewer == null)
+                throw new KeyNotFoundException("Reviewer not found");
+
+            var ratedEmployeeNames = dto.Ratings
+                .Select(r => r.EmployeeName)
+                .Distinct()
+                .ToList();
+
+            var reviewedEmployees = await _employeeRepo.GetByNamesAsync(ratedEmployeeNames);
+            var reviewedDict = reviewedEmployees.ToDictionary(e => e.Name, StringComparer.OrdinalIgnoreCase);
+
+            var existingReviews = await _reviewRepo.GetByReviewerAndReviewedsAsync(reviewer.Id, reviewedEmployees.Select(e => e.Id).ToList());
+            var existingReviewPairs = new HashSet<(int, int)>(
+                existingReviews.Select(r => (r.Employee.Id, r.ReviewedEmployee.Id)));
+
+            var newReviews = new List<EmployeeReview>();
+
+            foreach (var entry in dto.Ratings)
             {
-                var reviewer = await _employeeRepo.GetByNameAsync(dto.ReviewerName);
-                if (reviewer == null)
-                    throw new Exception("Reviewer not found");  
+                if (entry.Rate < 1 || entry.Rate > 5)
+                    throw new ArgumentException($"Invalid rating for {entry.EmployeeName}. Must be between {RatingEnum.One} and {RatingEnum.Five}");
 
+                if (entry.EmployeeName.Equals(dto.ReviewerName, StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException("You cannot rate yourself");
 
-                foreach (var entry in dto.Ratings)
-                {
-                    if (entry.Rate < 1 || entry.Rate > 5)
-                        throw new Exception($"Invalid rating for {entry.EmployeeName} rating should be From {RatingEnum.One} to {RatingEnum.Five}");
+                if (!reviewedDict.TryGetValue(entry.EmployeeName, out var reviewed))
+                    throw new KeyNotFoundException($"Employee {entry.EmployeeName} not found");
 
-                    var reviewed = await _employeeRepo.GetByNameAsync(entry.EmployeeName);
-                    if (reviewed == null)
-                        throw new Exception($"Employee {entry.EmployeeName} not found");
+                if (reviewed.Department.Id != reviewer.Department.Id)
+                    throw new InvalidOperationException($"{entry.EmployeeName} is not in the same department");
 
-                    if (reviewed.Department.Id != reviewer.Department.Id)
-                        throw new Exception($"{entry.EmployeeName} is not in the same department");
+                if (existingReviewPairs.Contains((reviewer.Id, reviewed.Id)))
+                    throw new InvalidOperationException($"You have already rated {entry.EmployeeName}");
 
-                    if (entry.EmployeeName == dto.ReviewerName)
-                        throw new Exception($"You cannot rate yourself");
-
-                    var existingReview = await _reviewRepo.GetByReviewerAndReviewedAsync(reviewer.Id, reviewed.Id);
-                    if (existingReview != null)
-                        throw new Exception($"You have already rated {entry.EmployeeName}");
-                    else
-                    {
-                        var employeeReview = _employeeReviewMapper.MapToEmployeeReviewFromEmployeeRatingDtoAndId(reviewer, reviewed, entry.Rate);
-                        await _reviewRepo.InsertAsync(employeeReview);
-                    }
-                }
-                await transaction.CommitAsync();
+                var employeeReview = _employeeReviewMapper.MapToEmployeeReviewFromEmployeeRatingDtoAndId(reviewer, reviewed, entry.Rate);
+                newReviews.Add(employeeReview);
             }
-            catch (Exception ex)
-            {
-                
-                    await transaction.RollbackAsync();
-                    if (string.IsNullOrEmpty(ex.Message))
-                        throw new Exception("An unknown error occurred while submitting ratings Please Submit Again.");
-                    else
-                        throw;
-                
-            }
+
+            await _reviewRepo.InsertRangeAsync(newReviews);
         }
+        
 
         public async Task<List<EmployeeReviewDto>> GetEmployeeEvaluationsAsync(string employeeName){
 
