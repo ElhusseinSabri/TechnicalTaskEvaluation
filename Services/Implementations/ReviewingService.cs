@@ -34,7 +34,8 @@ namespace Services.Implementations
             {
                 var reviewer = await _employeeRepo.GetByNameAsync(dto.ReviewerName);
                 if (reviewer == null)
-                    throw new Exception("Reviewer not found");
+                    throw new Exception("Reviewer not found");  
+
 
                 foreach (var entry in dto.Ratings)
                 {
